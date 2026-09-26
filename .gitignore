@@ -19,3 +19,6 @@ terraform/*_override.tf.json
 # Sistema Operacional
 .DS_Store
 Thumbs.db
+
+# Documentação Local com Dados Reais
+LOCAL_*.md
