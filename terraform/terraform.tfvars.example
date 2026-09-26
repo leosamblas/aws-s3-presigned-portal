@@ -1,0 +1,9 @@
+# Configurações do Bucket S3 e Usuário IAM Autorizado
+# Copie este arquivo para terraform.tfvars e preencha com seus dados reais:
+# cp terraform.tfvars.example terraform.tfvars
+
+aws_region           = "us-east-1"
+bucket_name          = "meu-bucket-s3-exemplo"
+environment          = "dev"
+allowed_iam_user_arn = "arn:aws:iam::123456789012:user/seu-usuario-iam"
+noncurrent_version_expiration_days = 90

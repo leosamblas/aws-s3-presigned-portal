@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Gerenciador web de arquivos no AWS S3 com suporte a upload/download via servidor e links pré-assinados.">
+  <meta name="color-scheme" content="dark light">
+  <title>AWS S3 Presigned Portal</title>
+
+  <!-- Previne flash de tema (FOUC) antes do primeiro render -->
+  <script>
+    (() => {
+      const saved = localStorage.getItem('s3_theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+    })();
+  </script>
+
+  <!-- Google Fonts com otimização font-display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Estilos modulares desacoplados -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Aplicação Javascript modular com defer -->
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Cabeçalho Principal -->
+    <header role="banner">
+      <div class="brand">
+        <h1>☁️ AWS S3 Presigned Portal</h1>
+      </div>
+      <div class="header-actions">
+        <button class="theme-toggle-btn" id="themeToggleBtn" type="button" aria-label="Alternar tema">
+          <span id="themeIcon" aria-hidden="true">☀️</span>
+          <span id="themeLabel">Modo Claro</span>
+        </button>
+
+        <div class="badge" id="bucketBadge" role="status" aria-live="polite">
+          📦 Conectando ao bucket...
+        </div>
+      </div>
+    </header>
+
+    <main role="main">
+      <!-- Seção 1: Upload de Arquivos -->
+      <section class="card" aria-labelledby="uploadTitle">
+        <div class="card-title">
+          <h2 id="uploadTitle" style="font-size: 16px; font-weight: 600;">Fazer Upload de Arquivo</h2>
+        </div>
+
+        <!-- Seletor de Modo (Vertentes) -->
+        <nav class="mode-selector" aria-label="Modo de Upload">
+          <button class="mode-btn mode-server" id="btnModeServer" type="button" aria-pressed="true">
+            💻 Vertente 1: Via Servidor (Proxy/Buffer)
+          </button>
+          <button class="mode-btn mode-presigned" id="btnModePresigned" type="button" aria-pressed="false">
+            ⚡ Vertente 2: Via Presigned URL (S3 Direto)
+          </button>
+        </nav>
+
+        <div class="mode-description" id="modeDescription" role="region" aria-live="polite">
+          ℹ️ <strong>Modo Servidor:</strong> O arquivo é enviado para a API Node.js local, que o encaminha com segurança para o bucket S3. Ideal para simplicidade e dispensa CORS.
+        </div>
+
+        <!-- Área de Dropzone acessível por clique e teclado -->
+        <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Área para selecionar arquivo">
+          <div class="dropzone-icon" aria-hidden="true">📤</div>
+          <p class="dropzone-text">Arraste e solte seu arquivo aqui ou <strong>clique para selecionar</strong></p>
+          <div class="file-details" id="fileDetails" role="status"></div>
+        </div>
+        <input type="file" id="fileInput" style="display: none;" aria-hidden="true">
+
+        <div class="progress-bar" id="progressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="uploadBtn" type="button" disabled>
+            Enviar via Servidor
+          </button>
+        </div>
+      </section>
+
+      <!-- Seção 2: Arquivos no Bucket -->
+      <section class="card" aria-labelledby="filesTitle">
+        <div class="card-title">
+          <h2 id="filesTitle" style="font-size: 16px; font-weight: 600;">Arquivos no Bucket</h2>
+          <button class="btn btn-secondary btn-sm" id="refreshBtn" type="button">
+            🔄 Atualizar
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="file-table" id="fileTable">
+            <thead>
+              <tr>
+                <th scope="col">Nome do Arquivo</th>
+                <th scope="col">Tamanho</th>
+                <th scope="col">Última Modificação</th>
+                <th scope="col" style="text-align: right;">Ações de Download</th>
+              </tr>
+            </thead>
+            <tbody id="fileListBody"></tbody>
+          </table>
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+          Nenhum arquivo encontrado no bucket. Faça seu primeiro upload acima!
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Diálogo Nativo HTML5 para Presigned URL -->
+  <dialog class="modal-dialog" id="presignedModal" aria-labelledby="modalTitle">
+    <h3 id="modalTitle">🔗 Presigned URL de Download (Válida por 60s)</h3>
+    <p>Esta URL permite que qualquer pessoa ou aplicação baixe o arquivo diretamente do S3 sem credenciais AWS:</p>
+    <input type="text" class="modal-input" id="presignedUrlInput" readonly aria-label="URL pré-assinada gerada">
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" id="closeModalBtn" type="button">Fechar</button>
+      <button class="btn btn-primary btn-sm" id="copyPresignedBtn" type="button">📋 Copiar Link</button>
+      <button class="btn btn-purple btn-sm" id="openPresignedBtn" type="button">⬇️ Baixar Direto</button>
+    </div>
+  </dialog>
+
+  <!-- Container de Notificações Toast acessível via ARIA -->
+  <aside class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></aside>
+
+</body>
+</html>

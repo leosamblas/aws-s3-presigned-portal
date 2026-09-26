@@ -1,0 +1,21 @@
+# Node.js
+web/node_modules/
+web/npm-debug.log*
+web/.env
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfvars
+!terraform/*.tfvars.example
+terraform/crash.log
+terraform/crash.*.log
+terraform/override.tf
+terraform/override.tf.json
+terraform/*_override.tf
+terraform/*_override.tf.json
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
